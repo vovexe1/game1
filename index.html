@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>말랑이 ASMR 힐링 카페 🎀</title>
+
+    <!-- PWA Primary Meta Tags -->
+    <meta name="theme-color" content="#fbcfe8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="말랑이 ASMR">
+
+    <!-- App Icon (Embedded SVG) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%23fbcfe8'/><path fill='%23f43f5e' d='M256 140c-40-50-110-50-150 0s-30 110 20 150l130 120 130-120c50-40 60-100 20-150s-110-50-150 0z'/></svg>">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #e0e7ff 100%);
+            min-height: 100vh;
+            color: #475569;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism UI Panels */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 25px -5px rgba(244, 114, 182, 0.25);
+            border-radius: 24px;
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .glass-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Particle Sparkle Canvas */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Floating Animation */
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+
+        .floating {
+            animation: gentleFloat 3s ease-in-out infinite;
+        }
+
+        /* Heart Beat Pulse */
+        @keyframes heartPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .pulse-heart {
+            animation: heartPulse 1.2s infinite ease-in-out;
+        }
+
+        /* Custom Malang-i Container Elastic FX */
+        .malang-container {
+            transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        /* Tab Item Active */
+        .tab-active {
+            background: linear-gradient(135deg, #f43f5e, #fb7185) !important;
+            color: white !important;
+            border-color: #f43f5e !important;
+            box-shadow: 0 8px 20px rgba(244, 63, 94, 0.35) !important;
+        }
+    </style>
+
+    <!-- Inline PWA Manifest Definition & Service Worker Hook -->
+    <script>
+        const manifestData = {
+            "name": "말랑이 ASMR 힐링 카페",
+            "short_name": "말랑이ASMR",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#fce7f3",
+            "theme_color": "#fbcfe8",
+            "orientation": "portrait-primary",
+            "icons": [{
+                "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%23fbcfe8'/><path fill='%23f43f5e' d='M256 140c-40-50-110-50-150 0s-30 110 20 150l130 120 130-120c50-40 60-100 20-150s-110-50-150 0z'/></svg>",
+                "sizes": "192x192 512x512",
+                "type": "image/svg+xml"
+            }]
+        };
+
+        const blobManifest = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+        const linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = URL.createObjectURL(blobManifest);
+        document.head.appendChild(linkManifest);
+
+        // Offline PWA Service Worker Embedded
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'malang-asmr-v1';
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        caches.match(e.request).then((res) => {
+                            return res || fetch(e.request).then((netRes) => {
+                                if (netRes && netRes.status === 200) {
+                                    const clone = netRes.clone();
+                                    caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+                                }
+                                return netRes;
+                            }).catch(() => caches.match('./'));
+                        })
+                    );
+                });
+            `;
+            const blobSW = new Blob([swCode], { type: 'application/javascript' });
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(URL.createObjectURL(blobSW))
+                    .catch(err => console.log('SW Register Error: ', err));
+            });
+        }
+    </script>
+</head>
+<body class="flex flex-col items-center justify-between p-3 sm:p-5 select-none">
+
+    <!-- Canvas for Sparks, Crumbs & Heart Particles -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Header UI -->
+    <header class="w-full max-w-md flex flex-col items-center gap-2 z-10">
+        <!-- Message Bar -->
+        <div class="glass-card px-4 py-1.5 flex items-center gap-2 border-pink-300 shadow-sm">
+            <span class="text-lg pulse-heart">💖</span>
+            <span class="text-xs sm:text-sm font-bold text-pink-600 tracking-wide">
+                알렉스아빠가 사랑하는 아들을 위해 만든 말랑이 카페!
+            </span>
+        </div>
+
+        <!-- Title & Controls Row -->
+        <div class="w-full flex justify-between items-center px-1">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl floating">🧸</span>
+                <div>
+                    <h1 class="text-2xl font-black text-pink-600 tracking-wider drop-shadow-sm">
+                        말랑이 ASMR
+                    </h1>
+                    <p class="text-[11px] text-purple-500 font-bold">생생한 와사삭 바삭 터치 소리</p>
+                </div>
+            </div>
+
+            <!-- Header Buttons -->
+            <div class="flex items-center gap-2">
+                <button id="pwaInstallBtn" class="hidden glass-btn bg-emerald-400 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-md flex items-center gap-1">
+                    <span>📥 앱 설치</span>
+                </button>
+                <button id="soundToggleBtn" onclick="toggleMute()" class="glass-btn px-3 py-1.5 rounded-full text-xs font-black text-pink-600 flex items-center gap-1">
+                    <span id="soundIcon">🔊</span>
+                    <span id="soundText">ASMR 켬</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Level & Satisfaction Dashboard -->
+        <div class="w-full glass-card p-3 grid grid-cols-3 gap-2 text-center items-center my-1">
+            <div class="bg-white/60 p-2 rounded-2xl border border-pink-200">
+                <p class="text-[11px] text-pink-400 font-bold">힐링 레벨</p>
+                <p id="levelText" class="text-xl font-black text-pink-600">Lv.1</p>
+            </div>
+            <div class="bg-white/60 p-2 rounded-2xl border border-purple-200">
+                <p class="text-[11px] text-purple-400 font-bold">말랑이 터치</p>
+                <p id="touchCountText" class="text-xl font-black text-purple-600">0회</p>
+            </div>
+            <div class="bg-white/60 p-2 rounded-2xl border border-indigo-200">
+                <p class="text-[11px] text-indigo-400 font-bold">연속 콤보</p>
+                <p id="comboText" class="text-xl font-black text-indigo-600">0 🔥</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Malang-i Interactive Play Area -->
+    <main class="w-full max-w-md flex flex-col items-center my-auto py-3 z-10">
+
+        <!-- Center Interactive Stage -->
+        <div class="relative w-full aspect-square max-w-[320px] glass-card flex flex-col items-center justify-center p-4 my-2 border-pink-200">
+            
+            <!-- Floating Text Banner for Combo Effects -->
+            <div id="comboBanner" class="absolute top-4 pointer-events-none opacity-0 transition-all duration-300 transform scale-75 text-center">
+                <span id="comboBannerText" class="text-2xl font-black text-pink-500 drop-shadow-md">
+                    와사삭! 💥
+                </span>
+            </div>
+
+            <!-- Dynamic Malang-i Display Character -->
+            <div id="malangCharacter" class="malang-container flex flex-col items-center justify-center relative w-56 h-56 rounded-full">
+                <!-- Inner Graphic SVG Icon or Composite Emoji Graphic -->
+                <div id="malangGraphic" class="text-8xl sm:text-9xl transition-transform transform hover:scale-105 active:scale-90 filter drop-shadow-xl select-none">
+                    🍡
+                </div>
+            </div>
+
+            <!-- Interactive Sub Action Guide -->
+            <div class="absolute bottom-3 text-center pointer-events-none">
+                <span id="actionGuide" class="text-xs font-bold text-pink-500 bg-white/70 px-3 py-1 rounded-full border border-pink-200 shadow-sm">
+                    👆 손가락으로 꾹꾹 만져보세요!
+                </span>
+            </div>
+        </div>
+
+        <!-- Malang-i Selector Tabs -->
+        <div class="w-full flex gap-2 overflow-x-auto py-2 px-1 scrollbar-none">
+            <button onclick="selectMalang('marshmallow')" id="tab-marshmallow" class="malang-tab glass-btn tab-active flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5">
+                <span>🧊</span> 동결건조 마시멜로
+            </button>
+            <button onclick="selectMalang('tape')" id="tab-tape" class="malang-tab glass-btn flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <span>🥎</span> 테이프공 칼질
+            </button>
+            <button onclick="selectMalang('catpaw')" id="tab-catpaw" class="malang-tab glass-btn flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <span>🐾</span> 말랑 고양이 젤리
+            </button>
+            <button onclick="selectMalang('boba')" id="tab-boba" class="malang-tab glass-btn flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <span>🧋</span> 버블티 펄 만지기
+            </button>
+            <button onclick="selectMalang('slime')" id="tab-slime" class="malang-tab glass-btn flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <span>🫧</span> 바삭 크런치 슬라임
+            </button>
+            <button onclick="selectMalang('bread')" id="tab-bread" class="malang-tab glass-btn flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <span>🍞</span> 치즈 갓빵 말랑이
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Bottom Footer Instructions -->
+    <footer class="w-full max-w-md text-center text-xs font-bold text-purple-400 z-10 py-1">
+        ✨ 이어폰을 끼고 플레이하면 ASMR 입체 음향이 더 선명해요!
+    </footer>
+
+    <!-- Web Audio API Synthesizer & Game Logic -->
+    <script>
+        // --- 1. Web Audio API Offline Synthesizer ---
+        class ASMRSynthesizer {
+            constructor() {
+                this.ctx = null;
+                this.isMuted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Generate Crisp Noise Buffer for ASMR 'Wasasak' Crunch
+            createNoiseBuffer(duration) {
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                return buffer;
+            }
+
+            // 1) Freeze-dried Marshmallow Wasasak Crunch
+            playCrunch() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                
+                // High Pass Filtered Crisp Crackle
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = this.createNoiseBuffer(0.18);
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(2500 + Math.random() * 1000, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(now);
+
+                // Secondary Snap Pop
+                const osc = this.ctx.createOscillator();
+                const oscGain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600 + Math.random() * 800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+
+                oscGain.gain.setValueAtTime(0.2, now);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+                osc.connect(oscGain);
+                oscGain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+
+            // 2) Tape Ball Cutting / Peeling Sharp Sound
+            playTapePeel() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = this.createNoiseBuffer(0.12);
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(4000 + Math.random() * 2000, now);
+                filter.Q.setValueAtTime(3, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(now);
+            }
+
+            // 3) Cat Paw / Soft Gel Squishy Pop
+            playSquishyPop() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350 + Math.random() * 100, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+
+            // 4) Boba Pearl Popping Bubble
+            playBobaPop() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800 + Math.random() * 400, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.06);
+            }
+
+            // 5) Crunchy Slime Stretch
+            playSlimePoke() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = this.createNoiseBuffer(0.15);
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1200 + Math.random() * 800, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(now);
+            }
+
+            // 6) Cheesy Bread Soft Squeeze
+            playBreadSqueeze() {
+                if (this.isMuted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180 + Math.random() * 50, now);
+                osc.frequency.linearRampToValueAtTime(120, now + 0.15);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+        }
+
+        const audio = new ASMRSynthesizer();
+
+        // --- 2. Malang-i Characters Configuration ---
+        const MALANG_TYPES = {
+            marshmallow: {
+                name: '동결건조 마시멜로',
+                emoji: '🧊',
+                sound: () => audio.playCrunch(),
+                particles: ['✨', '❄️', '🤍', '⭐'],
+                particleColor: '#f1f5f9',
+                guide: '👆 바삭하게 와사삭 깨뜨려보세요!',
+                sfxText: '와사삭!! 🧊'
+            },
+            tape: {
+                name: '테이프공 자르기',
+                emoji: '🥎',
+                sound: () => audio.playTapePeel(),
+                particles: ['✂️', '🌈', '✨', '💛'],
+                particleColor: '#fef08a',
+                guide: '👆 칼로 살짝 잘라 레이어를 차르륵!',
+                sfxText: '차르륵-! ✂️'
+            },
+            catpaw: {
+                name: '고양이 말랑 젤리',
+                emoji: '🐾',
+                sound: () => audio.playSquishyPop(),
+                particles: ['🌸', '💖', '🐾', '✨'],
+                particleColor: '#fbcfe8',
+                guide: '👆 분홍 젤리를 말랑말랑 주물러요!',
+                sfxText: '말랑뽀짝! 🐾'
+            },
+            boba: {
+                name: '버블티 펄 만지기',
+                emoji: '🧋',
+                sound: () => audio.playBobaPop(),
+                particles: ['🧋', '🟤', '✨', '💥'],
+                particleColor: '#78350f',
+                guide: '👆 쫀득한 타피오카 펄을 톡톡!',
+                sfxText: '톡- 팡! 🧋'
+            },
+            slime: {
+                name: '바삭 크런치 슬라임',
+                emoji: '🫧',
+                sound: () => audio.playSlimePoke(),
+                particles: ['🫧', '💎', '✨', '💜'],
+                particleColor: '#c084fc',
+                guide: '👆 크런치 슬라임을 꾹꾹 늘려봐요!',
+                sfxText: '바삭바삭! 🫧'
+            },
+            bread: {
+                name: '치즈 갓빵 말랑이',
+                emoji: '🍞',
+                sound: () => audio.playBreadSqueeze(),
+                particles: ['🧀', '✨', '💛', '🍞'],
+                particleColor: '#fbbf24',
+                guide: '👆 따끈따끈 폭신한 빵을 꾹~!',
+                sfxText: '폭신폭신! 🧀'
+            }
+        };
+
+        // --- 3. Game State Management ---
+        let currentType = 'marshmallow';
+        let touchCount = 0;
+        let combo = 0;
+        let level = 1;
+        let comboTimer = null;
+
+        const malangChar = document.getElementById('malangCharacter');
+        const malangGraphic = document.getElementById('malangGraphic');
+        const actionGuide = document.getElementById('actionGuide');
+
+        // --- 4. Interactive Touch Handling ---
+        function handleInteraction(e) {
+            e.preventDefault();
+
+            // Trigger ASMR Sound
+            const item = MALANG_TYPES[currentType];
+            item.sound();
+
+            // Update Stats & Combo
+            touchCount++;
+            combo++;
+            if (comboTimer) clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => {
+                combo = 0;
+                updateDashboard();
+            }, 1200);
+
+            // Level Up logic every 25 touches
+            level = Math.floor(touchCount / 25) + 1;
+
+            updateDashboard();
+
+            // Visual Elastic Deformation Physics
+            triggerSquishAnimation();
+
+            // Spawn Particles at Touch Coordinates
+            const rect = malangChar.getBoundingClientRect();
+            let touchX = rect.left + rect.width / 2;
+            let touchY = rect.top + rect.height / 2;
+
+            if (e.touches && e.touches[0]) {
+                touchX = e.touches[0].clientX;
+                touchY = e.touches[0].clientY;
+            } else if (e.clientX) {
+                touchX = e.clientX;
+                touchY = e.clientY;
+            }
+
+            spawnParticles(touchX, touchY, item.particles);
+            showComboBanner(item.sfxText);
+        }
+
+        // Add Listeners for Mouse and Touch Events
+        malangChar.addEventListener('pointerdown', handleInteraction);
+
+        function triggerSquishAnimation() {
+            // Elastic Squish Effect
+            const scaleX = 0.75 + Math.random() * 0.15;
+            const scaleY = 1.25 - Math.random() * 0.15;
+            const rotate = (Math.random() - 0.5) * 15;
+
+            malangGraphic.style.transform = `scale(${scaleX}, ${scaleY}) rotate(${rotate}deg)`;
+
+            setTimeout(() => {
+                malangGraphic.style.transform = `scale(1, 1) rotate(0deg)`;
+            }, 120);
+        }
+
+        function showComboBanner(text) {
+            const banner = document.getElementById('comboBanner');
+            const bannerText = document.getElementById('comboBannerText');
+
+            bannerText.textContent = text;
+            banner.style.opacity = '1';
+            banner.style.transform = 'translateY(-10px) scale(1.1)';
+
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                banner.style.transform = 'translateY(0px) scale(0.85)';
+            }, 400);
+        }
+
+        function updateDashboard() {
+            document.getElementById('touchCountText').textContent = `${touchCount}회`;
+            document.getElementById('levelText').textContent = `Lv.${level}`;
+            document.getElementById('comboText').textContent = `${combo} 🔥`;
+        }
+
+        // --- 5. Malang Character Selection ---
+        function selectMalang(typeKey) {
+            currentType = typeKey;
+            const item = MALANG_TYPES[typeKey];
+
+            // Tab Styles Update
+            document.querySelectorAll('.malang-tab').forEach(tab => {
+                tab.classList.remove('tab-active');
+                tab.classList.add('text-slate-600');
+            });
+
+            const activeTab = document.getElementById(`tab-${typeKey}`);
+            if (activeTab) {
+                activeTab.classList.add('tab-active');
+                activeTab.classList.remove('text-slate-600');
+            }
+
+            // Update Stage Display
+            malangGraphic.textContent = item.emoji;
+            actionGuide.textContent = item.guide;
+
+            // Trigger Pop Effect on Change
+            audio.playSquishyPop();
+            triggerSquishAnimation();
+        }
+
+        function toggleMute() {
+            audio.isMuted = !audio.isMuted;
+            document.getElementById('soundIcon').textContent = audio.isMuted ? '🔇' : '🔊';
+            document.getElementById('soundText').textContent = audio.isMuted ? '음소거' : 'ASMR 켬';
+        }
+
+        // --- 6. Particle Sparkle Canvas System ---
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, char) {
+                this.x = x;
+                this.y = y;
+                this.char = char;
+                this.size = Math.random() * 16 + 14;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.7) * 6;
+                this.alpha = 1;
+                this.gravity = 0.15;
+                this.rotation = Math.random() * 360;
+                this.rotSpeed = (Math.random() - 0.5) * 8;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.alpha -= 0.025;
+                this.rotation += this.rotSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.font = `${this.size}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.char, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function spawnParticles(x, y, emojiList) {
+            for (let i = 0; i < 6; i++) {
+                const char = emojiList[Math.floor(Math.random() * emojiList.length)];
+                particles.push(new Particle(x, y, char));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // --- 7. PWA Install Button Handler ---
+        let deferredPrompt;
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaInstallBtn.classList.remove('hidden');
+        });
+
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    pwaInstallBtn.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        });
+    </script>
+</body>
+</html>
